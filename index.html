@@ -121,13 +121,13 @@
             <div class="parchment rounded-lg p-4">
                 <h3 class="font-fantasy text-2xl mb-2 border-b-2 border-amber-800/50 pb-1">History</h3>
                 <ul id="history-list" class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    <!-- History items -->
+                    <!-- History items will be loaded here -->
                 </ul>
             </div>
             <div class="parchment rounded-lg p-4">
                 <h3 class="font-fantasy text-2xl mb-2 border-b-2 border-amber-800/50 pb-1">Favorites</h3>
                 <ul id="favorites-list" class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    <!-- Favorite items -->
+                    <!-- Favorite items will be loaded here -->
                 </ul>
             </div>
         </div>
@@ -151,9 +151,13 @@
         const favoritesList = document.getElementById('favorites-list');
         const toast = document.getElementById('toast');
 
-        // --- DATA: LEXICON & TEMPLATES ---
+        // --- DATA & STATE MANAGEMENT ---
+        let history = [];
+        let favorites = [];
+        const HISTORY_KEY = 'fantasyIdiomHistory';
+        const FAVORITES_KEY = 'fantasyIdiomFavorites';
 
-        // The core data for generation. It's structured by category and then by sub-category (like race or theme).
+        // --- DATA: LEXICON & TEMPLATES ---
         const lexicon = {
             nouns: {
                 dwarf: ['pickaxe', 'mithril vein', 'ancestor\'s beard', 'rune-stone', 'deep forge', 'goblet of mead'],
@@ -189,65 +193,94 @@
         };
 
         const templates = [
-            { 
-                template: (n1, n2, v, adj) => `To ${v} a ${adj} ${n1} with a ${n2}.`,
-                meaning: `To attempt something difficult or pointless.`
-            },
-            {
-                template: (n1, adj, comp) => `As ${adj} as a ${comp}'s ${n1}.`,
-                meaning: (n1, adj, comp) => `To be extremely ${adj}.`
-            },
-            {
-                template: (v, n1, event) => `Don't ${v} your ${n1} until you've seen the ${event}.`,
-                meaning: `Don't celebrate too early; ensure the task is complete first.`
-            },
-            {
-                template: (n1, n2, place) => `A ${n1} in the hand is worth two in the ${place}.`,
-                meaning: `It's better to keep what you have than to risk it for something potentially better.`
-            },
-            {
-                template: (n1, n2) => `You can't make a ${n1} out of a ${n2}.`,
-                meaning: `You cannot create something of high quality from poor materials or poor character.`
-            },
-            {
-                template: (adj, n1) => `Another ${adj} ${n1} in the fire.`,
-                meaning: `Just one more problem or task among many.`
-            },
-            {
-                template: (n1, v) => `Let the sleeping ${n1} ${v}.`,
-                meaning: `Do not disturb a dangerous situation or person.`
-            },
-            {
-                template: (n1, v) => `Even a blind ${n1} finds a ${v} sometimes.`,
-                meaning: `Even the unskilled or unlucky can be successful by chance.`
-            }
+            { template: (n1, n2, v, adj) => `To ${v} a ${adj} ${n1} with a ${n2}.`, meaning: `To attempt something difficult or pointless.` },
+            { template: (n1, adj, comp) => `As ${adj} as a ${comp}'s ${n1}.`, meaning: (n1, adj, comp) => `To be extremely ${adj}.` },
+            { template: (v, n1, event) => `Don't ${v} your ${n1} until you've seen the ${event}.`, meaning: `Don't celebrate too early; ensure the task is complete first.` },
+            { template: (n1, n2, place) => `A ${n1} in the hand is worth two in the ${place}.`, meaning: `It's better to keep what you have than to risk it for something potentially better.` },
+            { template: (n1, n2) => `You can't make a ${n1} out of a ${n2}.`, meaning: `You cannot create something of high quality from poor materials or poor character.` },
+            { template: (adj, n1) => `Another ${adj} ${n1} in the fire.`, meaning: `Just one more problem or task among many.` },
+            { template: (n1, v) => `Let the sleeping ${n1} ${v}.`, meaning: `Do not disturb a dangerous situation or person.` },
+            { template: (n1, v) => `Even a blind ${n1} finds a ${v} sometimes.`, meaning: `Even the unskilled or unlucky can be successful by chance.` }
         ];
         
         // --- HELPER FUNCTIONS ---
-
-        // Gets a random element from an array
         const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
-        
-        // Gets a word from the lexicon, with fallbacks
         const getWord = (category, subCategory) => {
             const list = lexicon[category];
-            if (subCategory !== 'any' && list[subCategory] && list[subCategory].length > 0) {
-                return getRandom(list[subCategory]);
-            }
-            // Fallback to a random subcategory if 'any' is selected or the specific list is empty.
-            const allWords = Object.values(list).flat();
-            return getRandom(allWords);
+            const potentialWords = (subCategory !== 'any' && list[subCategory]) ? list[subCategory] : Object.values(list).flat();
+            return getRandom(potentialWords);
         };
-        
-        // --- CORE LOGIC ---
 
+        // --- LOCAL STORAGE & RENDER FUNCTIONS ---
+        function saveData() {
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+        }
+
+        function loadData() {
+            const savedHistory = localStorage.getItem(HISTORY_KEY);
+            const savedFavorites = localStorage.getItem(FAVORITES_KEY);
+            if (savedHistory) history = JSON.parse(savedHistory);
+            if (savedFavorites) favorites = JSON.parse(savedFavorites);
+        }
+
+        function renderHistory() {
+            historyList.innerHTML = '';
+            for (const idiomData of history) {
+                const li = document.createElement('li');
+                li.className = 'text-sm p-2 bg-black/5 rounded-md';
+                li.innerHTML = `<span class="font-bold italic">"${idiomData.idiom}"</span>`;
+                historyList.appendChild(li);
+            }
+        }
+
+        function renderFavorites() {
+            favoritesList.innerHTML = '';
+            for (const idiomData of favorites) {
+                const li = document.createElement('li');
+                li.className = 'text-sm p-2 bg-black/5 rounded-md flex justify-between items-center';
+                li.innerHTML = `<span class="font-bold italic pr-2">"${idiomData.idiom}"</span>`;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = '×';
+                removeBtn.className = 'font-bold text-red-700 hover:text-red-500 text-lg';
+                removeBtn.title = "Remove Favorite";
+                removeBtn.onclick = () => removeFromFavorites(idiomData);
+                
+                li.appendChild(removeBtn);
+                favoritesList.appendChild(li);
+            }
+            // After rendering favorites, update the favorite buttons on the main display
+            updateFavoriteButtons();
+        }
+
+        function addIdiomToHistory(idiomData) {
+            history.unshift(idiomData);
+            if (history.length > 20) history.pop();
+            saveData();
+            renderHistory();
+        }
+
+        function addToFavorites(idiomData) {
+            if (!favorites.some(fav => fav.idiom === idiomData.idiom)) {
+                favorites.unshift(idiomData);
+                saveData();
+                renderFavorites();
+            }
+        }
+        
+        function removeFromFavorites(idiomData) {
+            favorites = favorites.filter(fav => fav.idiom !== idiomData.idiom);
+            saveData();
+            renderFavorites();
+        }
+
+        // --- CORE LOGIC ---
         function generateIdiom(race, theme) {
             const chosenTemplate = getRandom(templates);
             let idiom = '';
             let meaning = '';
 
-            // This logic determines which words to pick based on the template's needs.
-            // It prioritizes the theme filter for thematic words, and the race filter for cultural flavor.
             try {
                 const n1 = getWord('nouns', theme) || getWord('nouns', race);
                 const n2 = getWord('nouns', race) || getWord('nouns', theme);
@@ -255,15 +288,8 @@
                 const verb = getRandom(lexicon.verbs.action);
                 const comparison = getRandom(Object.values(lexicon.comparisons).flat());
                 
-                // Generate idiom and meaning based on template
                 idiom = chosenTemplate.template(n1, n2, verb, adj, comparison);
-                if (typeof chosenTemplate.meaning === 'function') {
-                    meaning = chosenTemplate.meaning(n1, adj, comparison);
-                } else {
-                    meaning = chosenTemplate.meaning;
-                }
-
-                // Capitalize first letter
+                meaning = typeof chosenTemplate.meaning === 'function' ? chosenTemplate.meaning(n1, adj, comparison) : chosenTemplate.meaning;
                 idiom = idiom.charAt(0).toUpperCase() + idiom.slice(1);
 
             } catch (error) {
@@ -273,6 +299,17 @@
 
             return { idiom, meaning, race, theme };
         }
+
+        function updateFavoriteButtons() {
+            const allFavoriteButtons = document.querySelectorAll('.favorite-btn');
+            allFavoriteButtons.forEach(button => {
+                const idiomText = button.dataset.idiom;
+                if (favorites.some(fav => fav.idiom === idiomText)) {
+                    button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill text-yellow-400" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.444-.36.791-.746.593L8 13.187l-4.389 2.256z"/></svg>`;
+                    button.disabled = true;
+                }
+            });
+        }
         
         function createIdiomElement(idiomData) {
             const { idiom, meaning, race, theme } = idiomData;
@@ -280,9 +317,9 @@
             const card = document.createElement('div');
             card.className = 'bg-amber-100/50 p-4 rounded-lg border border-amber-800/20 shadow-inner fade-in';
 
-            const idiomText = document.createElement('blockquote');
-            idiomText.className = 'text-xl font-fantasy italic';
-            idiomText.textContent = `"${idiom}"`;
+            const idiomTextEl = document.createElement('blockquote');
+            idiomTextEl.className = 'text-xl font-fantasy italic';
+            idiomTextEl.textContent = `"${idiom}"`;
             
             const meaningText = document.createElement('p');
             meaningText.className = 'mt-2 text-sm';
@@ -299,7 +336,7 @@
             if (theme !== 'any') {
                 const themeTag = document.createElement('span');
                 themeTag.className = 'bg-gray-700 text-white px-2 py-1 rounded-full';
-                themeTag.textContent = theme.split('&')[0].trim(); // Shorten for display
+                themeTag.textContent = theme.split('&')[0].trim();
                 tagsContainer.appendChild(themeTag);
             }
 
@@ -307,16 +344,11 @@
             actionsContainer.className = 'mt-3 flex gap-2';
 
             const copyBtn = document.createElement('button');
-            copyBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
-                  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
-                  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
-                </svg>`;
+            copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>`;
             copyBtn.className = 'btn-secondary !p-2';
             copyBtn.title = 'Copy';
             copyBtn.onclick = () => {
                 const textToCopy = `"${idiom}"\nMeaning: ${meaning}`;
-                // Fallback for iFrame clipboard access
                 try {
                     const textArea = document.createElement('textarea');
                     textArea.value = textToCopy;
@@ -326,39 +358,28 @@
                     document.body.removeChild(textArea);
 
                     toast.textContent = "Copied to clipboard!";
-                    toast.classList.remove('opacity-0', 'translate-y-3');
-                    setTimeout(() => {
-                        toast.classList.add('opacity-0', 'translate-y-3');
-                    }, 2000);
+                    toast.classList.remove('opacity-0', 'translate-y-3', 'bg-red-600');
+                    setTimeout(() => toast.classList.add('opacity-0', 'translate-y-3'), 2000);
                 } catch (err) {
                     console.error('Clipboard copy failed:', err);
                     toast.textContent = "Copy failed!";
                     toast.classList.add('bg-red-600');
                     toast.classList.remove('opacity-0', 'translate-y-3');
-                     setTimeout(() => {
-                        toast.classList.add('opacity-0', 'translate-y-3');
-                        toast.classList.remove('bg-red-600');
-                    }, 2000);
+                     setTimeout(() => toast.classList.add('opacity-0', 'translate-y-3'), 2000);
                 }
             };
             
             const favoriteBtn = document.createElement('button');
-            favoriteBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star" viewBox="0 0 16 16">
-                  <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.954 2.824a.565.565 0 0 0-.163.505l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
-                </svg>`;
-            favoriteBtn.className = 'btn-secondary !p-2';
+            favoriteBtn.className = 'btn-secondary !p-2 favorite-btn';
             favoriteBtn.title = 'Favorite';
-            favoriteBtn.onclick = (e) => {
-                addToFavorites(idiomData);
-                e.currentTarget.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill text-yellow-400" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.444-.36.791-.746.593L8 13.187l-4.389 2.256z"/></svg>`;
-                e.currentTarget.disabled = true;
-            };
+            favoriteBtn.dataset.idiom = idiom; // Store idiom text for identification
+            favoriteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star" viewBox="0 0 16 16"><path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.954 2.824a.565.565 0 0 0-.163.505l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/></svg>`;
+            favoriteBtn.onclick = () => addToFavorites(idiomData);
 
             actionsContainer.appendChild(copyBtn);
             actionsContainer.appendChild(favoriteBtn);
 
-            card.appendChild(idiomText);
+            card.appendChild(idiomTextEl);
             card.appendChild(meaningText);
             card.appendChild(tagsContainer);
             card.appendChild(actionsContainer);
@@ -366,59 +387,30 @@
             return card;
         }
 
-        function addToHistory(idiomData) {
-            const li = document.createElement('li');
-            li.className = 'text-sm p-2 bg-black/5 rounded-md';
-            li.innerHTML = `<span class="font-bold italic">"${idiomData.idiom}"</span>`;
-            
-            // Add to top of the list
-            if (historyList.firstChild) {
-                historyList.insertBefore(li, historyList.firstChild);
-            } else {
-                historyList.appendChild(li);
-            }
-            // Limit history size
-            while (historyList.children.length > 20) {
-                historyList.removeChild(historyList.lastChild);
-            }
+        // --- INITIALIZATION & EVENT LISTENERS ---
+        function init() {
+            loadData();
+            renderHistory();
+            renderFavorites();
+
+            generateBtn.addEventListener('click', () => {
+                const race = raceSelect.value;
+                const theme = themeSelect.value;
+                const count = parseInt(countSelect.value, 10);
+                
+                outputContainer.innerHTML = ''; // Clear previous results
+                
+                for (let i = 0; i < count; i++) {
+                    const idiomData = generateIdiom(race, theme);
+                    const idiomElement = createIdiomElement(idiomData);
+                    outputContainer.appendChild(idiomElement);
+                    addIdiomToHistory(idiomData);
+                }
+                updateFavoriteButtons(); // check new cards against existing favorites
+            });
         }
-
-        function addToFavorites(idiomData) {
-             const li = document.createElement('li');
-            li.className = 'text-sm p-2 bg-black/5 rounded-md flex justify-between items-center';
-            li.innerHTML = `<span class="font-bold italic pr-2">"${idiomData.idiom}"</span>`;
-
-            const removeBtn = document.createElement('button');
-            removeBtn.textContent = '×';
-            removeBtn.className = 'font-bold text-red-700 hover:text-red-500 text-lg';
-            removeBtn.title = "Remove Favorite";
-            removeBtn.onclick = () => {
-                li.remove();
-            };
-            li.appendChild(removeBtn);
-
-            if (favoritesList.firstChild) {
-                favoritesList.insertBefore(li, favoritesList.firstChild);
-            } else {
-                favoritesList.appendChild(li);
-            }
-        }
-
-        // --- EVENT LISTENERS ---
-        generateBtn.addEventListener('click', () => {
-            const race = raceSelect.value;
-            const theme = themeSelect.value;
-            const count = parseInt(countSelect.value, 10);
-            
-            outputContainer.innerHTML = ''; // Clear previous results
-            
-            for (let i = 0; i < count; i++) {
-                const idiomData = generateIdiom(race, theme);
-                const idiomElement = createIdiomElement(idiomData);
-                outputContainer.appendChild(idiomElement);
-                addToHistory(idiomData);
-            }
-        });
+        
+        init(); // Run the app
     });
     </script>
 </body>
