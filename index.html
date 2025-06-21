@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Fantasy Idiom Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233f3f46' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .font-fantasy {
+            font-family: 'MedievalSharp', cursive;
+        }
+        .parchment {
+            background-color: #fdf5e6;
+            border: 1px solid #d2b48c;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(210, 180, 140, 0.7);
+            color: #4a2c2a;
+        }
+        .btn-primary {
+            @apply px-6 py-3 bg-amber-800 text-white font-bold rounded-lg shadow-md hover:bg-amber-700 transition-all duration-200 ease-in-out transform hover:scale-105;
+        }
+        .btn-secondary {
+             @apply px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-all duration-200 ease-in-out;
+        }
+        .custom-select {
+            @apply w-full p-2 border border-amber-800 rounded-md bg-white/50 text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-600;
+        }
+        /* Custom scrollbar for history/favorites */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #fdf5e6;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #ab8e6f;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #8b7355;
+        }
+        .fade-in {
+            animation: fadeIn 0.7s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="font-fantasy text-5xl md:text-6xl text-amber-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">Fantasy Idiom Generator</h1>
+            <p class="text-lg text-amber-200 mt-2">Crafting lore, one saying at a time.</p>
+        </header>
+
+        <main class="parchment rounded-xl p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Controls Column -->
+            <div class="md:col-span-1">
+                <h2 class="font-fantasy text-3xl border-b-2 border-amber-800/50 pb-2 mb-4">Customize</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="race-select" class="font-bold block mb-1">Race / Culture:</label>
+                        <select id="race-select" class="custom-select">
+                            <option value="any">Any</option>
+                            <option value="dwarf">Dwarven</option>
+                            <option value="elf">Elven</option>
+                            <option value="orc">Orcish</option>
+                            <option value="goblin">Goblin</option>
+                            <option value="halfling">Halfling</option>
+                            <option value="human">Human (General)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="theme-select" class="font-bold block mb-1">Theme:</label>
+                        <select id="theme-select" class="custom-select">
+                            <option value="any">Any</option>
+                            <option value="war">War & Conflict</option>
+                            <option value="nature">Nature & Elements</option>
+                            <option value="crafting">Crafting & Forging</option>
+                            <option value="adventure">Adventure & Peril</option>
+                            <option value="social">Social & Politics</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="count-select" class="font-bold block mb-1">Quantity:</label>
+                        <select id="count-select" class="custom-select">
+                            <option value="1">Generate 1</option>
+                            <option value="3">Generate 3</option>
+                            <option value="5">Generate 5</option>
+                        </select>
+                    </div>
+                    <button id="generate-btn" class="btn-primary w-full mt-4 font-fantasy text-2xl">Conjure!</button>
+                </div>
+            </div>
+
+            <!-- Generator Output Column -->
+            <div class="md:col-span-2">
+                <div id="output-container" class="space-y-4 min-h-[16rem]">
+                    <!-- Generated idioms will appear here -->
+                     <div class="text-center p-8 h-full flex flex-col justify-center items-center">
+                        <p class="text-amber-900/70 text-lg">Your generated idioms will appear here...</p>
+                     </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- History and Favorites -->
+        <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="parchment rounded-lg p-4">
+                <h3 class="font-fantasy text-2xl mb-2 border-b-2 border-amber-800/50 pb-1">History</h3>
+                <ul id="history-list" class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    <!-- History items -->
+                </ul>
+            </div>
+            <div class="parchment rounded-lg p-4">
+                <h3 class="font-fantasy text-2xl mb-2 border-b-2 border-amber-800/50 pb-1">Favorites</h3>
+                <ul id="favorites-list" class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                    <!-- Favorite items -->
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed bottom-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-3 transition-all duration-300">
+            Copied to clipboard!
+        </div>
+
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM ELEMENTS ---
+        const generateBtn = document.getElementById('generate-btn');
+        const raceSelect = document.getElementById('race-select');
+        const themeSelect = document.getElementById('theme-select');
+        const countSelect = document.getElementById('count-select');
+        const outputContainer = document.getElementById('output-container');
+        const historyList = document.getElementById('history-list');
+        const favoritesList = document.getElementById('favorites-list');
+        const toast = document.getElementById('toast');
+
+        // --- DATA: LEXICON & TEMPLATES ---
+
+        // The core data for generation. It's structured by category and then by sub-category (like race or theme).
+        const lexicon = {
+            nouns: {
+                dwarf: ['pickaxe', 'mithril vein', 'ancestor\'s beard', 'rune-stone', 'deep forge', 'goblet of mead'],
+                elf: ['starlight', 'ancient tree', 'silver arrow', 'fey-path', 'songwood harp', 'moonpetal'],
+                orc: ['warg\'s tooth', 'battle-scar', 'blood-axe', 'war drum', 'shattered shield', 'iron tusk'],
+                goblin: ['shiny trinket', 'stolen spoon', 'mushroom patch', 'rickety trap', 'bag of teeth', 'rusty dagger'],
+                halfling: ['full pantry', 'second breakfast', 'warm hearth', 'well-tended garden', 'comfortable armchair', 'clay pipe'],
+                human: ['king\'s decree', 'mercenary\'s contract', 'farmer\'s field', 'merchant\'s coin', 'city sewer', 'steel sword'],
+                war: ['battering ram', 'siege tower', 'broken banner', 'general\'s map', 'last stand', 'war cry'],
+                nature: ['thunderhead', 'river stone', 'wolf\'s howl', 'ancient oak', 'sun-bleached bone', 'briar patch'],
+                crafting: ['masterwork hammer', 'unblemished leather', 'dragonscale', 'perfectly cut gem', 'glowing ingot', 'weaver\'s loom'],
+                adventure: ['dungeon map', 'dragon\'s hoard', 'empty wineskin', 'rumor in a tavern', 'forgotten tomb', 'bottomless pit'],
+                social: ['noble\'s promise', 'jester\'s joke', 'assassin\'s shadow', 'spy\'s whisper', 'royal seal', 'beggar\'s bowl'],
+            },
+            adjectives: {
+                dwarf: ['sturdy', 'grumbling', 'unyielding', 'deep', 'gold-crazed', 'ancestral'],
+                elf: ['ethereal', 'ageless', 'graceful', 'haughty', 'ancient', 'moonlit'],
+                orc: ['brutish', 'bloodthirsty', 'savage', 'battle-hardened', 'cracked', 'unrelenting'],
+                goblin: ['sneaky', 'cackling', 'cobbled-together', 'filthy', 'unhinged', 'hoarded'],
+                halfling: ['comfortable', 'well-fed', 'deceptively simple', 'hearty', 'stubborn', 'warm'],
+                human: ['ambitious', 'fleeting', 'versatile', 'resourceful', 'flawed', 'determined'],
+                general: ['cursed', 'broken', 'forgotten', 'legendary', 'common'],
+            },
+            verbs: {
+                action: ['sharpen', 'count', 'polish', 'chase', 'wrestle', 'forge', 'read', 'plant', 'barter'],
+                state: ['is worth', 'is faster than', 'is sharper than', 'is heavier than', 'is more useful than'],
+            },
+            comparisons: {
+                creatures: ['dragon', 'griffin', 'goblin', 'golem', 'kraken', 'dryad', 'orc shaman'],
+                places: ['the Underdark', 'a king\'s vault', 'an elven glade', 'a dragon\'s maw', 'the bottom of the sea'],
+                concepts: ['a broken promise', 'a king\'s ransom', 'a fool\'s errand', 'a dying breath'],
+            }
+        };
+
+        const templates = [
+            { 
+                template: (n1, n2, v, adj) => `To ${v} a ${adj} ${n1} with a ${n2}.`,
+                meaning: `To attempt something difficult or pointless.`
+            },
+            {
+                template: (n1, adj, comp) => `As ${adj} as a ${comp}'s ${n1}.`,
+                meaning: (n1, adj, comp) => `To be extremely ${adj}.`
+            },
+            {
+                template: (v, n1, event) => `Don't ${v} your ${n1} until you've seen the ${event}.`,
+                meaning: `Don't celebrate too early; ensure the task is complete first.`
+            },
+            {
+                template: (n1, n2, place) => `A ${n1} in the hand is worth two in the ${place}.`,
+                meaning: `It's better to keep what you have than to risk it for something potentially better.`
+            },
+            {
+                template: (n1, n2) => `You can't make a ${n1} out of a ${n2}.`,
+                meaning: `You cannot create something of high quality from poor materials or poor character.`
+            },
+            {
+                template: (adj, n1) => `Another ${adj} ${n1} in the fire.`,
+                meaning: `Just one more problem or task among many.`
+            },
+            {
+                template: (n1, v) => `Let the sleeping ${n1} ${v}.`,
+                meaning: `Do not disturb a dangerous situation or person.`
+            },
+            {
+                template: (n1, v) => `Even a blind ${n1} finds a ${v} sometimes.`,
+                meaning: `Even the unskilled or unlucky can be successful by chance.`
+            }
+        ];
+        
+        // --- HELPER FUNCTIONS ---
+
+        // Gets a random element from an array
+        const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        
+        // Gets a word from the lexicon, with fallbacks
+        const getWord = (category, subCategory) => {
+            const list = lexicon[category];
+            if (subCategory !== 'any' && list[subCategory] && list[subCategory].length > 0) {
+                return getRandom(list[subCategory]);
+            }
+            // Fallback to a random subcategory if 'any' is selected or the specific list is empty.
+            const allWords = Object.values(list).flat();
+            return getRandom(allWords);
+        };
+        
+        // --- CORE LOGIC ---
+
+        function generateIdiom(race, theme) {
+            const chosenTemplate = getRandom(templates);
+            let idiom = '';
+            let meaning = '';
+
+            // This logic determines which words to pick based on the template's needs.
+            // It prioritizes the theme filter for thematic words, and the race filter for cultural flavor.
+            try {
+                const n1 = getWord('nouns', theme) || getWord('nouns', race);
+                const n2 = getWord('nouns', race) || getWord('nouns', theme);
+                const adj = getWord('adjectives', race) || getWord('adjectives', 'general');
+                const verb = getRandom(lexicon.verbs.action);
+                const comparison = getRandom(Object.values(lexicon.comparisons).flat());
+                
+                // Generate idiom and meaning based on template
+                idiom = chosenTemplate.template(n1, n2, verb, adj, comparison);
+                if (typeof chosenTemplate.meaning === 'function') {
+                    meaning = chosenTemplate.meaning(n1, adj, comparison);
+                } else {
+                    meaning = chosenTemplate.meaning;
+                }
+
+                // Capitalize first letter
+                idiom = idiom.charAt(0).toUpperCase() + idiom.slice(1);
+
+            } catch (error) {
+                console.error("Error generating idiom:", error);
+                return { idiom: "The scribe seems to have dropped his ink...", meaning: "Something went wrong during generation. Try again." };
+            }
+
+            return { idiom, meaning, race, theme };
+        }
+        
+        function createIdiomElement(idiomData) {
+            const { idiom, meaning, race, theme } = idiomData;
+            
+            const card = document.createElement('div');
+            card.className = 'bg-amber-100/50 p-4 rounded-lg border border-amber-800/20 shadow-inner fade-in';
+
+            const idiomText = document.createElement('blockquote');
+            idiomText.className = 'text-xl font-fantasy italic';
+            idiomText.textContent = `"${idiom}"`;
+            
+            const meaningText = document.createElement('p');
+            meaningText.className = 'mt-2 text-sm';
+            meaningText.innerHTML = `<span class="font-bold">Meaning:</span> ${meaning}`;
+            
+            const tagsContainer = document.createElement('div');
+            tagsContainer.className = 'mt-3 flex flex-wrap gap-2 text-xs';
+            if (race !== 'any') {
+                const raceTag = document.createElement('span');
+                raceTag.className = 'bg-amber-700 text-white px-2 py-1 rounded-full';
+                raceTag.textContent = race.charAt(0).toUpperCase() + race.slice(1);
+                tagsContainer.appendChild(raceTag);
+            }
+            if (theme !== 'any') {
+                const themeTag = document.createElement('span');
+                themeTag.className = 'bg-gray-700 text-white px-2 py-1 rounded-full';
+                themeTag.textContent = theme.split('&')[0].trim(); // Shorten for display
+                tagsContainer.appendChild(themeTag);
+            }
+
+            const actionsContainer = document.createElement('div');
+            actionsContainer.className = 'mt-3 flex gap-2';
+
+            const copyBtn = document.createElement('button');
+            copyBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+                  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                </svg>`;
+            copyBtn.className = 'btn-secondary !p-2';
+            copyBtn.title = 'Copy';
+            copyBtn.onclick = () => {
+                const textToCopy = `"${idiom}"\nMeaning: ${meaning}`;
+                // Fallback for iFrame clipboard access
+                try {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = textToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+
+                    toast.textContent = "Copied to clipboard!";
+                    toast.classList.remove('opacity-0', 'translate-y-3');
+                    setTimeout(() => {
+                        toast.classList.add('opacity-0', 'translate-y-3');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Clipboard copy failed:', err);
+                    toast.textContent = "Copy failed!";
+                    toast.classList.add('bg-red-600');
+                    toast.classList.remove('opacity-0', 'translate-y-3');
+                     setTimeout(() => {
+                        toast.classList.add('opacity-0', 'translate-y-3');
+                        toast.classList.remove('bg-red-600');
+                    }, 2000);
+                }
+            };
+            
+            const favoriteBtn = document.createElement('button');
+            favoriteBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star" viewBox="0 0 16 16">
+                  <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.954 2.824a.565.565 0 0 0-.163.505l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+                </svg>`;
+            favoriteBtn.className = 'btn-secondary !p-2';
+            favoriteBtn.title = 'Favorite';
+            favoriteBtn.onclick = (e) => {
+                addToFavorites(idiomData);
+                e.currentTarget.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill text-yellow-400" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.444-.36.791-.746.593L8 13.187l-4.389 2.256z"/></svg>`;
+                e.currentTarget.disabled = true;
+            };
+
+            actionsContainer.appendChild(copyBtn);
+            actionsContainer.appendChild(favoriteBtn);
+
+            card.appendChild(idiomText);
+            card.appendChild(meaningText);
+            card.appendChild(tagsContainer);
+            card.appendChild(actionsContainer);
+            
+            return card;
+        }
+
+        function addToHistory(idiomData) {
+            const li = document.createElement('li');
+            li.className = 'text-sm p-2 bg-black/5 rounded-md';
+            li.innerHTML = `<span class="font-bold italic">"${idiomData.idiom}"</span>`;
+            
+            // Add to top of the list
+            if (historyList.firstChild) {
+                historyList.insertBefore(li, historyList.firstChild);
+            } else {
+                historyList.appendChild(li);
+            }
+            // Limit history size
+            while (historyList.children.length > 20) {
+                historyList.removeChild(historyList.lastChild);
+            }
+        }
+
+        function addToFavorites(idiomData) {
+             const li = document.createElement('li');
+            li.className = 'text-sm p-2 bg-black/5 rounded-md flex justify-between items-center';
+            li.innerHTML = `<span class="font-bold italic pr-2">"${idiomData.idiom}"</span>`;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = '×';
+            removeBtn.className = 'font-bold text-red-700 hover:text-red-500 text-lg';
+            removeBtn.title = "Remove Favorite";
+            removeBtn.onclick = () => {
+                li.remove();
+            };
+            li.appendChild(removeBtn);
+
+            if (favoritesList.firstChild) {
+                favoritesList.insertBefore(li, favoritesList.firstChild);
+            } else {
+                favoritesList.appendChild(li);
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        generateBtn.addEventListener('click', () => {
+            const race = raceSelect.value;
+            const theme = themeSelect.value;
+            const count = parseInt(countSelect.value, 10);
+            
+            outputContainer.innerHTML = ''; // Clear previous results
+            
+            for (let i = 0; i < count; i++) {
+                const idiomData = generateIdiom(race, theme);
+                const idiomElement = createIdiomElement(idiomData);
+                outputContainer.appendChild(idiomElement);
+                addToHistory(idiomData);
+            }
+        });
+    });
+    </script>
+</body>
+</html>
