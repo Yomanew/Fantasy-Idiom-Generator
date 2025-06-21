@@ -1,5 +1,5 @@
 Advanced Fantasy Idiom Generator
-Fantasy Idiom Generator Screenshot
+
 A feature-rich, customizable idiom generator for world-builders, writers, and tabletop RPG enthusiasts. This tool creates unique, lore-friendly sayings and proverbs tailored to different fantasy races and themes, helping to add depth and flavor to any fictional setting.
 
 This project is a single, self-contained HTML file that runs entirely in the browser, using localStorage to save user data.
